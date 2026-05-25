@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Components · User Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Tokens globales ─────────────────────────────────────────────────────── */
+    :root {
+      --font-main: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --bg:        #060b18;
+      --surface:   #0f172a;
+      --card-bg:   #0f172a;
+      --border:    rgba(255,255,255,0.07);
+      --text-primary: #f8fafc;
+      --text-muted:   #64748b;
+      --accent:    #6366f1;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+      background-image:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(56,189,248,0.06) 0%, transparent 60%);
+    }
+
+    .scene {
+      width: min(520px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* Cabecera de la demo */
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-family: var(--font-mono);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    h1 span { color: var(--accent); }
+
+    /* ── Personalización de parts desde el exterior ──────────────────────────── */
+
+    /* Se puede estilizar desde fuera usando ::part() */
+    user-card::part(button) {
+      /* override sutil del botón usando CSS Parts */
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Log de eventos ──────────────────────────────────────────────────────── */
+    .event-log {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .event-log-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    #log-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    .log-time { color: #475569; flex-shrink: 0; }
+    .log-event { color: #7dd3fc; }
+    .log-detail { color: #a5b4fc; }
+
+    .empty { color: #334155; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<div class="scene">
+  <header>
+    <h1>Dashboard <span>del Clima</span></h1>
+  </header>
+
+  <!-- ── El dashboard como orquestador ── -->
+  <user-dashboard id="dashboard">
+
+    <user-card
+      slot="card"
+      name="César"
+      role="Estudiante de informática">
+    </user-card>
+
+    <weather-time
+      slot="weather"
+      city="Liberia, CR"
+      temp="31"
+      condition="Sunny">
+    </weather-time>
+
+    <warning-badge
+      slot="badge"
+      message="Sesión por expirar">
+    </warning-badge>
+
+  </user-dashboard>
+
+  <!-- ── Log en vivo para visualizar el flujo de eventos ── -->
+  <div class="event-log">
+    <div class="event-log-title">Event log</div>
+    <div id="log-entries">
+      <span class="empty">Esperando eventos… (haz click en Saludar)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Carga de componentes (type="module" para ES Modules) -->
+<script type="module">
+  import './src/user-card.js';
+  import './src/weather-time.js';
+  import './src/warning-badge.js';
+  import './src/user-dashboard.js';
+
+  const logEntries = document.getElementById('log-entries');
+  let firstEntry = true;
+
+  function addLog(event, detail) {
+    if (firstEntry) {
+      logEntries.innerHTML = '';
+      firstEntry = false;
+    }
+    const time = new Date().toLocaleTimeString('es-CR', { hour12: false });
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `
+      <span class="log-time">${time}</span>
+      <span class="log-event">⚡ ${event}</span>
+      <span class="log-detail">${detail}</span>
+    `;
+    logEntries.prepend(entry);
+  }
+
+  // Escucha global del evento greet (bubbles + composed)
+  document.getElementById('dashboard').addEventListener('greet', (e) => {
+    addLog('greet', `name="${e.detail.name}" → pulsing activado`);
+  });
+</script>
+</body>
+</html>
